@@ -14,7 +14,6 @@ import ghidra.program.model.address.AddressSet as AddressSet
 
 BytePattern = collections.namedtuple('BytePattern', ['is_wildcard','byte'])
 
-
 def gamesense_sig(self):
     return (r'\x{:02X}'.format(self.byte) if not self.is_wildcard else r'\xCC')
 
@@ -22,18 +21,14 @@ def gamesense_sig(self):
 BytePattern.sig_str = gamesense_sig
 
 def shouldMaskOperand(ins, opIndex):
-    optype = ins.getOperandType(opIndex)
-    return optype & OperandType.DYNAMIC or optype & OperandType.ADDRESS
-
+    return ins.getOperandType(opIndex) & OperandType.DYNAMIC or ins.getOperandType(opIndex) & OperandType.ADDRESS
 
 def getMaskedInstruction(ins):
     mask = [0] * ins.length
-
-    proto = ins.getPrototype()
-    for op in range(proto.getNumOperands()):
+    for op in range(ins.getPrototype().getNumOperands()):
         if shouldMaskOperand(ins, op):
             mask = [m | v & 0xFF for (m, v) in zip(mask,
-                proto.getOperandValueMask(op).getBytes())]
+                ins.getPrototype().getOperandValueMask(op).getBytes())]
 
     for (m, b) in zip(mask, ins.getBytes()):
         if m == 0xFF:
@@ -41,15 +36,13 @@ def getMaskedInstruction(ins):
         else:
             yield BytePattern(byte=b & 0xFF, is_wildcard=False)
 
-
 if __name__ == '__main__':
     fm = currentProgram.getFunctionManager()
     fn = fm.getFunctionContaining(currentAddress)
     if not fn:
         raise Exception('NOT IN A FUNCTION')
 
-    cm = currentProgram.getCodeManager()
-    ins = cm.getInstructionContaining(currentAddress)
+    ins = currentProgram.getCodeManager().getInstructionContaining(currentAddress)
 
     pattern = ''
     byte_pattern = []
