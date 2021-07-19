@@ -1,5 +1,5 @@
 # Ghidra Signature
-Gets gamesense FFI signatures with ghidra
+Gets csgo FFI signatures with ghidra
 
 
 ## How to install
